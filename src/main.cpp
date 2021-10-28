@@ -3,10 +3,10 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
-#define RADIO_1 7
-#define RADIO_2 8
+#define RADIO_1 8
+#define RADIO_2 10
 #define JOY_BUT 9
-#define LED 12
+#define LED 7
 #define JOY_X A0
 #define JOY_Y A1
 #define THROTTLE A2
@@ -26,10 +26,10 @@ void setup() {
     pinMode(THROTTLE, INPUT);
     pinMode(LED, OUTPUT);
 
-    //radio.begin();
-    //radio.openWritingPipe(addresses[1]); // 00002
-    //radio.openReadingPipe(1, addresses[0]); // 00001
-    //radio.setPALevel(RF24_PA_MIN);
+    radio.begin();
+    radio.openWritingPipe(addresses[1]); // 00002
+    radio.openReadingPipe(1, addresses[0]); // 00001
+    radio.setPALevel(RF24_PA_MIN);
 
     //digitalWrite(LED, HIGH);
 }
@@ -44,7 +44,8 @@ void loop() {
         Serial.println("button");
         digitalWrite(LED, HIGH);
     } else {
-        Serial.println((String)"Joystick X: " + (joyX - 507) + ", Y: " + (joyY - 491) + ", Throttle: " + throttle);
+        //Serial.println((String)"Joystick X: " + (joyX - 507) + ", Y: " + (joyY - 491) + ", Throttle: " + throttle);
+        Serial.println((String)"Joystick X: " + (joyX) + ", Y: " + (joyY) + ", Throttle: " + throttle);
         digitalWrite(LED, LOW);
     }
 
@@ -56,12 +57,12 @@ void loop() {
 
     if (joyX < 1023/3) {
         turning = -1;
-    } else if (joyX > 1023*2/3) {
+    } else if (joyX > (1023/3) * 2) {
         turning = 1;
     }
 
     // Map the throttle and turning angle.
-    int angleValue = map(joyX, 0, 1023, 0, 0.2);
+    int angleValue = map(joyX, 0, 1023, 0, 180);
     int throttleValue = map(throttle, 0, 1023, 0, 255);
 
     // Reset to avoid interference.
@@ -79,6 +80,8 @@ void loop() {
         rightSpeed *= ratio;
     }
 
+    Serial.println((String)"Turning: " + turning);
+
     // Send the throttle and turning angle.
     radio.write(&leftSpeed, sizeof(leftSpeed));
     radio.write(&rightSpeed, sizeof(rightSpeed));
@@ -86,6 +89,8 @@ void loop() {
     delay(5);
 
     radio.startListening();
+
+    Serial.println("listening");
 
     while (!radio.available());
 
@@ -97,9 +102,4 @@ void loop() {
     else {
         digitalWrite(LED, LOW);
     }
-}
-
-
-int calulateOuterWheelSpeed(int v1, int v2) {
-    return 0;
 }
